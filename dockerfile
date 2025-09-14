@@ -43,10 +43,15 @@ RUN npm run build
 # 9. Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 10. Exponer puerto (opcional)
+# 10. Ejecutar migraciones y cache de Laravel durante build
+RUN php artisan migrate --force
+RUN php artisan config:cache
+RUN php artisan route:cache
+RUN php artisan view:cache
+
+# 11. Exponer puerto (opcional)
 EXPOSE 10000
 
-# 11. Comando por defecto para Render: usar PHP built-in server
+# 12. Comando por defecto para Render: usar PHP built-in server
 CMD ["sh", "-c", "php -S 0.0.0.0:$PORT -t public"]
-
 
