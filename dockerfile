@@ -1,40 +1,51 @@
-# Imagen base con PHP 8.2 y FPM
-FROM php:8.2-fpm
+# 1. Imagen base con PHP y extensiones necesarias
+FROM php:8.2-fpm-alpine
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+# 2. Instalar dependencias del sistema
+RUN apk add --no-cache \
+    bash \
     git \
     curl \
+    libzip-dev \
     zip \
     unzip \
-    libzip-dev \
+    oniguruma-dev \
     libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    redis-tools \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+    autoconf \
+    gcc \
+    g++ \
+    make \
+    shadow \
+    icu-dev \
+    nodejs \
+    npm \
+    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd intl
 
-# Instalar extensión de Redis
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+# 3. Instalar extensión de Redis
+RUN pecl install redis && docker-php-ext-enable redis
 
-# Instalar Composer
+# 4. Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Establecer directorio de trabajo
-WORKDIR /var/www
+# 5. Crear directorio de trabajo
+WORKDIR /var/www/html
 
-# Copiar archivos de Laravel
+# 6. Copiar archivos de Laravel
 COPY . .
 
-# Instalar dependencias de PHP/Laravel
+# 7. Instalar dependencias de PHP/Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Permisos para el almacenamiento y caché
-RUN chown -R www-data:www-data storage bootstrap/cache
+# 8. Instalar dependencias de Node (para Livewire / Mix / Vite)
+RUN npm install
+RUN npm run build
 
-# Exponer el puerto de PHP-FPM
-EXPOSE 9000
+# 9. Permisos
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Comando por defecto
+# 10. Exponer puerto (Render usa 10000 por defecto para web services, pero se puede configurar)
+EXPOSE 10000
+
+# 11. Comando por defecto para ejecutar PHP-FPM
 CMD ["php-fpm"]
+
