@@ -43,9 +43,10 @@ RUN npm run build
 # 9. Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 10. Exponer puerto (Render usa 10000 por defecto para web services, pero se puede configurar)
+# 10. Exponer puerto (opcional)
 EXPOSE 10000
 
-# 11. Comando por defecto para ejecutar PHP-FPM
-CMD ["php-fpm"]
+# 11. Comando por defecto para Render: usar PHP built-in server
+CMD ["sh", "-c", "php -S 0.0.0.0:$PORT -t public"]
+
 
