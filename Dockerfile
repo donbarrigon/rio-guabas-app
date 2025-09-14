@@ -28,37 +28,26 @@ RUN pecl install redis && docker-php-ext-enable redis
 # 4. Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# 5. Instalar FrankenPHP
-RUN curl -sSL https://frankenphp.dev/install.sh | sh && \
-    mv frankenphp /usr/local/bin/
-
-# 6. Crear directorio de trabajo
+# 5. Crear directorio de trabajo
 WORKDIR /var/www/html
 
-# 7. Copiar archivos de Laravel
+# 6. Copiar archivos del proyecto
 COPY . .
 
-# 8. Instalar dependencias de PHP/Laravel
+# 7. Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# 9. Instalar dependencias de Node (Tailwind / Vite / Mix)
-RUN npm install
-RUN npm run build
+# 8. Instalar dependencias de Node y compilar frontend (si usas Vite/Livewire/etc.)
+RUN npm install && npm run build
 
-# 10. Permisos
+# 9. Permisos de Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 11. Ejecutar migraciones y cache de Laravel durante build
-RUN php artisan migrate --force
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+# 10. Cachear configuración de Laravel
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
-# 12. Exponer puerto que usará FrankenPHP
-EXPOSE 10000
+# 11. Exponer puerto (ejemplo)
+EXPOSE 8000
 
-# 13. Comando por defecto: arrancar FrankenPHP
-CMD ["sh", "-c", "frankenphp php-server -r public/ -p $PORT"]
-
-
-
+# 12. Comando de inicio (solo para desarrollo, en producción se recomienda Nginx o un reverse proxy)
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
