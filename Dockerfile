@@ -14,7 +14,7 @@ RUN install-php-extensions \
     pcntl
 
 # 2. Instalar utilidades necesarias para composer
-RUN apk add --no-cache git unzip curl nodejs npm
+## RUN apk add --no-cache git unzip curl nodejs npm
 
 # 3. Instalar Composer desde la imagen oficial
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
