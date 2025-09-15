@@ -1,48 +1,44 @@
 FROM dunglas/frankenphp
 
-# 1. Instalar dependencias necesarias para Composer
-RUN apk add --no-cache \
-    bash \
-    git \
-    curl \
+# 1. Instalar extensiones necesarias
+RUN install-php-extensions \
+    pdo_pgsql \
+    redis \
+    gd \
+    intl \
     zip \
-    unzip \
-    libzip-dev \
-    oniguruma-dev \
-    libpng-dev \
-    autoconf \
-    gcc \
-    g++ \
-    make \
-    icu-dev \
-    nodejs \
-    npm \
-    postgresql-dev \
-    && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd intl
+    opcache \
+    bcmath \
+    mbstring \
+    exif \
+    pcntl
 
-# 2. Instalar Composer desde la imagen oficial
+# 2. Instalar utilidades necesarias para composer
+RUN apk add --no-cache git unzip curl nodejs npm
+
+# 3. Instalar Composer desde la imagen oficial
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# 3. Crear directorio de trabajo
+# 4. Crear directorio de trabajo
 WORKDIR /app
 
-# 4. Copiar archivos del proyecto
+# 5. Copiar archivos del proyecto
 COPY . .
 
-# 5. Instalar dependencias de PHP
+# 6. Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# 6. Instalar dependencias de Node y compilar frontend
+# 7. Instalar dependencias de Node y compilar frontend (Vite)
 RUN npm ci && npm run build
 
-# 7. Permisos de Laravel
+# 8. Permisos de Laravel
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-# 8. Cachear configuración de Laravel
+# 9. Cachear configuración de Laravel
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
-# 9. Exponer puertos
+# 10. Exponer puertos
 EXPOSE 80 443
 
-# 10. Iniciar con FrankenPHP
+# 11. Iniciar con FrankenPHP
 CMD ["frankenphp", "php-server", "-r", "public/"]
